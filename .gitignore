@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+
+# Herstellerdokumentation: urheberrechtlich geschuetzt, nicht weiterverbreiten.
+# Bezugsquellen und Dokumentnummern stehen im README.
+# Fuer ein privates Repository kann diese Zeile entfallen.
+doku/

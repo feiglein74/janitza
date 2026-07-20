@@ -1,0 +1,215 @@
+<title>Woran man sieht, dass ein Netzteil die Betriebsart wechselt</title>
+
+<style>
+  .viz-root {
+    color-scheme: light;
+    --paper:#F2F4F6; --surface-1:#FFFFFF;
+    --text-primary:#14181D; --text-secondary:#5A646E; --text-muted:#98A2AC;
+    --rule:#C9D1D8; --rule-soft:#E6EAEE; --grid:#E9EDF1;
+    --accent:#C2700B; --band:#F4F6F8;
+    --series-1:#2a78d6;
+    --series-2:#008300;
+    --series-3:#e87ba4;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) .viz-root {
+      color-scheme: dark;
+      --paper:#0D1116; --surface-1:#141A21;
+      --text-primary:#DDE3E9; --text-secondary:#94A0AC; --text-muted:#626F7B;
+      --rule:#2C3641; --rule-soft:#1E262E; --grid:#1F2831;
+      --accent:#E9A44F; --band:#1A222A;
+      --series-1:#3987e5;
+      --series-2:#008300;
+      --series-3:#d55181;
+    }
+  }
+  :root[data-theme="dark"] .viz-root {
+    color-scheme: dark;
+    --paper:#0D1116; --surface-1:#141A21;
+    --text-primary:#DDE3E9; --text-secondary:#94A0AC; --text-muted:#626F7B;
+    --rule:#2C3641; --rule-soft:#1E262E; --grid:#1F2831;
+    --accent:#E9A44F; --band:#1A222A;
+      --series-1:#3987e5;
+      --series-2:#008300;
+      --series-3:#d55181;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin:0; background:var(--paper); color:var(--text-primary);
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    line-height:1.6; -webkit-font-smoothing:antialiased;
+  }
+  .viz-root { background:var(--paper); min-height:100vh; }
+  .wrap { max-width:1040px; margin:0 auto; padding:40px 24px 96px;
+           display:flex; flex-direction:column; gap:32px; }
+  header { display:flex; flex-direction:column; gap:10px; }
+  .eyebrow { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+              font-size:11px; letter-spacing:0.16em; text-transform:uppercase;
+              color:var(--accent); }
+  h1 { margin:0; font-size:clamp(26px,4vw,34px); font-weight:600;
+        letter-spacing:-0.02em; text-wrap:balance; }
+  h2 { margin:0; font-size:17px; font-weight:600; letter-spacing:-0.01em; }
+  h3 { margin:0; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size:11px; letter-spacing:0.12em; text-transform:uppercase;
+        color:var(--text-muted); font-weight:500; }
+  .lede { margin:0; max-width:64ch; color:var(--text-secondary); }
+  section { display:flex; flex-direction:column; gap:14px; }
+  .chart { background:var(--surface-1); border:1px solid var(--rule);
+            border-radius:3px; padding:18px 18px 10px; overflow-x:auto; }
+  svg { display:block; min-width:820px; width:100%; height:auto; }
+  .note { margin:0; color:var(--text-secondary); font-size:15px; max-width:70ch; }
+  .note b { color:var(--text-primary); font-weight:600; }
+  #tip { position:fixed; z-index:20; pointer-events:none; opacity:0;
+          transition:opacity .08s ease; background:var(--text-primary);
+          color:var(--surface-1); padding:6px 10px; border-radius:4px;
+          font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+          font-size:12px; white-space:nowrap; }
+  #tip.on { opacity:1; }
+  table { width:100%; border-collapse:collapse; font-size:14px;
+           font-variant-numeric:tabular-nums; }
+  th, td { text-align:right; padding:9px 0 9px 16px;
+            border-bottom:1px solid var(--rule-soft); }
+  th:first-child, td:first-child { text-align:left; padding-left:0; }
+  th { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size:11px; letter-spacing:0.08em; text-transform:uppercase;
+        color:var(--text-muted); font-weight:500; }
+  td.mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+             font-size:13px; }
+  .plot { min-width:640px; display:flex; flex-direction:column; gap:2px; }
+  .grp { display:flex; flex-direction:column; gap:2px; padding:9px 0; }
+  .grp + .grp { border-top:1px solid var(--rule-soft); }
+  .grp h3 { margin-bottom:3px; padding-left:122px; }
+  .row { display:grid; grid-template-columns:108px 1fr 64px; gap:14px;
+          align-items:center; padding:3px 0; }
+  .row .name { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+                font-size:12px; color:var(--text-secondary); text-align:right;
+                white-space:nowrap; }
+  .row.hl .name { color:var(--text-primary); font-weight:600; }
+  .track { position:relative; height:24px; }
+  .gridlines { position:absolute; inset:0; display:flex;
+                justify-content:space-between; pointer-events:none; }
+  .gridlines i { width:1px; background:var(--grid); }
+  .bar { position:absolute; inset:0; display:flex; }
+  .seg { height:100%; cursor:default; transition:filter .12s ease; }
+  .seg + .seg { margin-left:2px; }
+  .seg:first-child { border-radius:4px 0 0 4px; }
+  .seg:last-child { border-radius:0 4px 4px 0; }
+  .seg:hover { filter:brightness(1.14); }
+  .row .eff { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+               font-size:13px; font-weight:600; font-variant-numeric:tabular-nums;
+               text-align:right; color:var(--text-primary); }
+  .row .eff.none { color:var(--text-muted); font-weight:400; }
+  .axis { display:grid; grid-template-columns:108px 1fr 64px; gap:14px;
+           margin-top:8px; padding-top:8px; border-top:1px solid var(--rule-soft); }
+  .ticks { grid-column:2; display:flex; justify-content:space-between;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size:11px; color:var(--text-muted); }
+  .legend { display:flex; flex-wrap:wrap; gap:8px 22px; margin-top:14px;
+             padding-top:14px; border-top:1px solid var(--rule-soft);
+             font-size:13px; color:var(--text-secondary); }
+  .legend span { display:inline-flex; align-items:center; gap:8px; }
+  .key { width:12px; height:12px; border-radius:3px; flex:none; }
+  footer { border-top:1px solid var(--rule); padding-top:16px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size:12px; color:var(--text-muted);
+            display:flex; flex-wrap:wrap; gap:6px 30px; }
+  @media (max-width:620px) { .wrap { padding:28px 16px 64px; } }
+</style>
+
+<div class="viz-root"><div class="wrap">
+<header><div class="eyebrow">GaN-USB-Lader · Oberschwingungen des Netzstroms</div><h1>Woran man sieht, dass ein Netzteil die Betriebsart wechselt</h1>
+<p class="lede">Ein Netzteil zieht keinen Sinus. Die Fourieranalyse zerlegt den Strom in seine Bestandteile: Der erste Balken ist die Grundschwingung mit 50 Hz, alle weiteren sind Vielfache davon. Je hoeher die hinteren Balken, desto verzerrter der Strom.</p>
+</header>
+<section><h2>Anteil an der Grundschwingung</h2><div class="chart">
+<svg id="chart_p" viewBox="0 0 1000 320" role="img" aria-label="Anteil an der Grundschwingung"></svg>
+<div class="legend"><span><i class="key" style="background:var(--series-1)"></i> Leerlauf · 0,4 W</span><span><i class="key" style="background:var(--series-2)"></i> 20 V / 1 A · 24 W</span><span><i class="key" style="background:var(--series-3)"></i> 20 V / 3 A · 67 W</span></div></div>
+<p class="note">So wird der Klirrfaktor gebildet: jede Ordnung im Verhaeltnis zur Grundschwingung. In dieser Ansicht sieht es aus, als wuerde bei 3 A alles besser - die dritte Ordnung faellt von 36 auf 21 Prozent.</p>
+</section>
+<section><h2>Absoluter Strom je Ordnung</h2><div class="chart">
+<svg id="chart_a" viewBox="0 0 1000 320" role="img" aria-label="Absoluter Strom je Ordnung"></svg>
+<div class="legend"><span><i class="key" style="background:var(--series-1)"></i> Leerlauf · 0,4 W</span><span><i class="key" style="background:var(--series-2)"></i> 20 V / 1 A · 24 W</span><span><i class="key" style="background:var(--series-3)"></i> 20 V / 3 A · 67 W</span></div></div>
+<p class="note">Dieselben Daten, aber als tatsaechlich fliessender Strom. Und hier kippt das Bild: Die fuenfte Ordnung <b>verdreifacht</b> sich, waehrend die siebte und die elfte trotz zweieinhalbfacher Leistung <b>kleiner</b> werden. Das kann keine gleichmaessige Verbesserung sein.</p>
+</section>
+<section><p class="note"><b>Warum das etwas bedeutet.</b> Wenn ein Netzteil bei mehr Last einfach mehr vom Gleichen zieht, wachsen alle Ordnungen im selben Verhaeltnis mit. Wenn eine Korrekturschaltung zuschaltet, fallen alle Ordnungen gemeinsam auf niedrige Werte. Beides sehen wir hier nicht.</p></section>
+<section><p class="note">Stattdessen wird das Spektrum <b>umgeformt</b>: manche Ordnungen wachsen ueberproportional, andere schrumpfen absolut. Das passiert, wenn der Wandler intern seine Arbeitsweise aendert - etwa vom lueckenden in den nicht lueckenden Betrieb wechselt. Die Stromform wird eine andere, nicht bloß eine groessere.</p></section>
+<section><p class="note"><b>Praktisch heisst das:</b> Der bessere Klirrfaktor bei 3 A ist kein Beleg fuer eine Leistungsfaktorkorrektur. Mit 31,7 Prozent liegt der Lader weit von den unter 10 Prozent entfernt, die eine aktive Stufe erreichen wuerde - und mit 67 W Aufnahme auch unter der 75-W-Schwelle, ab der die Norm ueberhaupt etwas verlangt.</p></section>
+<footer><span>Janitza UMG 96RM · Fourieranalyse bis 40. Ordnung</span><span>2026-07-20</span></footer>
+</div></div><div id="tip"></div>
+<script>
+const REIHEN=[{"label":"Leerlauf \u00b7 0,4 W","punkte":[{"a":22.515,"p":100.0},{"a":0.457,"p":2.03},{"a":1.183,"p":5.256},{"a":0.093,"p":0.412},{"a":1.9929999999999999,"p":8.854},{"a":0.263,"p":1.166},{"a":1.9559999999999997,"p":8.687},{"a":0.19699999999999998,"p":0.874},{"a":1.7,"p":7.552},{"a":0.0,"p":0.0},{"a":1.254,"p":5.568},{"a":0.13899999999999998,"p":0.616},{"a":1.65,"p":7.326},{"a":0.06499999999999999,"p":0.29},{"a":1.198,"p":5.32},{"a":0.13799999999999998,"p":0.613},{"a":1.071,"p":4.757},{"a":0.046,"p":0.203},{"a":1.605,"p":7.127},{"a":0.102,"p":0.452},{"a":1.089,"p":4.835},{"a":0.101,"p":0.448},{"a":1.81,"p":8.041},{"a":0.09000000000000001,"p":0.398},{"a":0.726,"p":3.224},{"a":0.183,"p":0.813},{"a":1.46,"p":6.485},{"a":0.044,"p":0.196},{"a":0.5429999999999999,"p":2.413},{"a":0.088,"p":0.389},{"a":1.5510000000000002,"p":6.889},{"a":0.044,"p":0.194},{"a":0.888,"p":3.944},{"a":0.0,"p":0.0},{"a":1.0230000000000001,"p":4.543},{"a":0.134,"p":0.596},{"a":0.5950000000000001,"p":2.645},{"a":0.12999999999999998,"p":0.578},{"a":0.378,"p":1.679},{"a":0.048,"p":0.213}]},{"label":"20 V / 1 A \u00b7 24 W","punkte":[{"a":128.42600000000002,"p":100.0},{"a":1.851,"p":1.441},{"a":46.262,"p":36.022},{"a":0.895,"p":0.697},{"a":19.470000000000002,"p":15.16},{"a":1.349,"p":1.05},{"a":19.111,"p":14.881},{"a":0.488,"p":0.38},{"a":8.761,"p":6.822},{"a":0.669,"p":0.521},{"a":13.506,"p":10.517},{"a":0.53,"p":0.412},{"a":4.795,"p":3.734},{"a":1.156,"p":0.9},{"a":8.183,"p":6.372},{"a":0.636,"p":0.495},{"a":7.771,"p":6.051},{"a":0.7699999999999999,"p":0.6},{"a":6.417,"p":4.996},{"a":0.285,"p":0.222},{"a":6.013,"p":4.682},{"a":0.442,"p":0.344},{"a":3.7439999999999998,"p":2.915},{"a":0.903,"p":0.703},{"a":6.15,"p":4.789},{"a":0.82,"p":0.638},{"a":1.222,"p":0.951},{"a":0.503,"p":0.392},{"a":2.777,"p":2.163},{"a":0.261,"p":0.203},{"a":2.711,"p":2.111},{"a":0.847,"p":0.66},{"a":5.709,"p":4.445},{"a":0.442,"p":0.345},{"a":0.719,"p":0.56},{"a":0.785,"p":0.611},{"a":5.49,"p":4.275},{"a":0.744,"p":0.579},{"a":1.649,"p":1.284},{"a":0.562,"p":0.437}]},{"label":"20 V / 3 A \u00b7 67 W","punkte":[{"a":315.524,"p":100.0},{"a":1.3190000000000002,"p":0.418},{"a":66.47,"p":21.067},{"a":0.546,"p":0.173},{"a":62.324,"p":19.752},{"a":0.22699999999999998,"p":0.072},{"a":17.323999999999998,"p":5.491},{"a":0.27599999999999997,"p":0.087},{"a":17.241,"p":5.464},{"a":0.064,"p":0.02},{"a":12.229000000000001,"p":3.876},{"a":0.22599999999999998,"p":0.072},{"a":16.186,"p":5.13},{"a":0.263,"p":0.083},{"a":5.269,"p":1.67},{"a":0.201,"p":0.064},{"a":13.479,"p":4.272},{"a":0.317,"p":0.1},{"a":7.5,"p":2.377},{"a":0.42000000000000004,"p":0.133},{"a":5.29,"p":1.677},{"a":0.365,"p":0.116},{"a":10.093,"p":3.199},{"a":0.36200000000000004,"p":0.115},{"a":4.460999999999999,"p":1.414},{"a":0.45399999999999996,"p":0.144},{"a":2.68,"p":0.849},{"a":0.505,"p":0.16},{"a":9.196,"p":2.915},{"a":0.5770000000000001,"p":0.183},{"a":7.485,"p":2.372},{"a":0.46299999999999997,"p":0.147},{"a":4.212,"p":1.335},{"a":0.3,"p":0.095},{"a":8.956000000000001,"p":2.838},{"a":0.087,"p":0.028},{"a":2.513,"p":0.796},{"a":0.298,"p":0.094},{"a":5.358,"p":1.698},{"a":0.27599999999999997,"p":0.088}]}];
+const ORDNUNGEN=15;
+
+const tip = document.getElementById("tip");
+const NS = "http://www.w3.org/2000/svg";
+const de = (v, n) => v.toFixed(n).replace(".", ",");
+
+function el(n, a) {
+  const e = document.createElementNS(NS, n);
+  for (const k in a) e.setAttribute(k, a[k]);
+  return e;
+}
+
+function balken(id, feld, einheit, nk) {
+  const svg = document.getElementById(id);
+  const L = 62, R = 12, T = 14, B = 34, W = 1000, H = 320;
+  const N = ORDNUNGEN;
+  let vmax = 0;
+  REIHEN.forEach(r => r.punkte.slice(0, N).forEach(p => {
+    if (p[feld] > vmax) vmax = p[feld];
+  }));
+  const stufe = Math.pow(10, Math.floor(Math.log10(vmax || 1)));
+  vmax = Math.ceil(vmax / stufe * 2) / 2 * stufe;
+
+  const gruppe = (W - L - R) / N;
+  const bw = Math.max(2, (gruppe - 4) / REIHEN.length);
+  const py = v => H - B - (H - T - B) * Math.min(v, vmax) / vmax;
+
+  for (let i = 0; i <= 4; i++) {
+    const v = vmax * i / 4;
+    svg.appendChild(el("line", { x1: L, y1: py(v), x2: W - R, y2: py(v),
+      stroke: "var(--grid)", "stroke-width": 1 }));
+    const t = el("text", { x: L - 8, y: py(v) + 4, "text-anchor": "end",
+      "font-size": 11, fill: "var(--text-muted)",
+      "font-family": "ui-monospace, Menlo, monospace" });
+    t.textContent = de(v, nk);
+    svg.appendChild(t);
+  }
+
+  REIHEN.forEach((r, ri) => {
+    r.punkte.slice(0, N).forEach((p, oi) => {
+      const x = L + gruppe * oi + 2 + ri * bw;
+      const y = py(p[feld]);
+      const rect = el("rect", { x, y, width: bw - 1, height: (H - B) - y,
+        fill: "var(--series-" + (ri + 1) + ")", rx: 1.5 });
+      const txt = r.label + " · " + (oi + 1) + ". Ordnung: "
+        + de(p[feld], nk + 1) + " " + einheit;
+      rect.addEventListener("mousemove", e => {
+        tip.textContent = txt;
+        tip.classList.add("on");
+        tip.style.left = Math.min(e.clientX + 14, innerWidth - tip.offsetWidth - 8) + "px";
+        tip.style.top = (e.clientY - tip.offsetHeight - 10) + "px";
+      });
+      rect.addEventListener("mouseleave", () => tip.classList.remove("on"));
+      svg.appendChild(rect);
+    });
+  });
+
+  for (let oi = 0; oi < N; oi++) {
+    if (N > 20 && (oi + 1) % 2 === 0) continue;
+    const t = el("text", { x: L + gruppe * oi + gruppe / 2, y: H - 14,
+      "text-anchor": "middle", "font-size": 11, fill: "var(--text-muted)",
+      "font-family": "ui-monospace, Menlo, monospace" });
+    t.textContent = oi + 1;
+    svg.appendChild(t);
+  }
+  const ax = el("text", { x: (L + W - R) / 2, y: H - 1, "text-anchor": "middle",
+    "font-size": 11, fill: "var(--text-muted)",
+    "font-family": "ui-monospace, Menlo, monospace" });
+  ax.textContent = "Ordnung der Oberschwingung";
+  svg.appendChild(ax);
+}
+
+balken("chart_p","p","%",0);
+balken("chart_a","a","mA",0);
+</script>

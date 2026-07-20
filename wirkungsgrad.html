@@ -1,0 +1,343 @@
+<title>Dieselbe Leistung, doppelter Verbrauch</title>
+
+<style>
+  .viz-root {
+    color-scheme: light;
+    --paper:#F2F4F6; --surface-1:#FFFFFF;
+    --text-primary:#14181D; --text-secondary:#5A646E; --text-muted:#98A2AC;
+    --rule:#C9D1D8; --rule-soft:#E6EAEE; --grid:#E9EDF1;
+    --accent:#C2700B; --band:#F4F6F8;
+    --series-1:#2a78d6;
+    --series-2:#008300;
+    --series-3:#e87ba4;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) .viz-root {
+      color-scheme: dark;
+      --paper:#0D1116; --surface-1:#141A21;
+      --text-primary:#DDE3E9; --text-secondary:#94A0AC; --text-muted:#626F7B;
+      --rule:#2C3641; --rule-soft:#1E262E; --grid:#1F2831;
+      --accent:#E9A44F; --band:#1A222A;
+      --series-1:#3987e5;
+      --series-2:#008300;
+      --series-3:#d55181;
+    }
+  }
+  :root[data-theme="dark"] .viz-root {
+    color-scheme: dark;
+    --paper:#0D1116; --surface-1:#141A21;
+    --text-primary:#DDE3E9; --text-secondary:#94A0AC; --text-muted:#626F7B;
+    --rule:#2C3641; --rule-soft:#1E262E; --grid:#1F2831;
+    --accent:#E9A44F; --band:#1A222A;
+      --series-1:#3987e5;
+      --series-2:#008300;
+      --series-3:#d55181;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin:0; background:var(--paper); color:var(--text-primary);
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    line-height:1.6; -webkit-font-smoothing:antialiased;
+  }
+  .viz-root { background:var(--paper); min-height:100vh; }
+  .wrap { max-width:1040px; margin:0 auto; padding:40px 24px 96px;
+           display:flex; flex-direction:column; gap:32px; }
+  header { display:flex; flex-direction:column; gap:10px; }
+  .eyebrow { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+              font-size:11px; letter-spacing:0.16em; text-transform:uppercase;
+              color:var(--accent); }
+  h1 { margin:0; font-size:clamp(26px,4vw,34px); font-weight:600;
+        letter-spacing:-0.02em; text-wrap:balance; }
+  h2 { margin:0; font-size:17px; font-weight:600; letter-spacing:-0.01em; }
+  h3 { margin:0; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size:11px; letter-spacing:0.12em; text-transform:uppercase;
+        color:var(--text-muted); font-weight:500; }
+  .lede { margin:0; max-width:64ch; color:var(--text-secondary); }
+  section { display:flex; flex-direction:column; gap:14px; }
+  .chart { background:var(--surface-1); border:1px solid var(--rule);
+            border-radius:3px; padding:18px 18px 10px; overflow-x:auto; }
+  svg { display:block; min-width:820px; width:100%; height:auto; }
+  .note { margin:0; color:var(--text-secondary); font-size:15px; max-width:70ch; }
+  .note b { color:var(--text-primary); font-weight:600; }
+  #tip { position:fixed; z-index:20; pointer-events:none; opacity:0;
+          transition:opacity .08s ease; background:var(--text-primary);
+          color:var(--surface-1); padding:6px 10px; border-radius:4px;
+          font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+          font-size:12px; white-space:nowrap; }
+  #tip.on { opacity:1; }
+  table { width:100%; border-collapse:collapse; font-size:14px;
+           font-variant-numeric:tabular-nums; }
+  th, td { text-align:right; padding:9px 0 9px 16px;
+            border-bottom:1px solid var(--rule-soft); }
+  th:first-child, td:first-child { text-align:left; padding-left:0; }
+  th { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size:11px; letter-spacing:0.08em; text-transform:uppercase;
+        color:var(--text-muted); font-weight:500; }
+  td.mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+             font-size:13px; }
+  .plot { min-width:640px; display:flex; flex-direction:column; gap:2px; }
+  .grp { display:flex; flex-direction:column; gap:2px; padding:9px 0; }
+  .grp + .grp { border-top:1px solid var(--rule-soft); }
+  .grp h3 { margin-bottom:3px; padding-left:122px; }
+  .row { display:grid; grid-template-columns:108px 1fr 64px; gap:14px;
+          align-items:center; padding:3px 0; }
+  .row .name { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+                font-size:12px; color:var(--text-secondary); text-align:right;
+                white-space:nowrap; }
+  .row.hl .name { color:var(--text-primary); font-weight:600; }
+  .track { position:relative; height:24px; }
+  .gridlines { position:absolute; inset:0; display:flex;
+                justify-content:space-between; pointer-events:none; }
+  .gridlines i { width:1px; background:var(--grid); }
+  .bar { position:absolute; inset:0; display:flex; }
+  .seg { height:100%; cursor:default; transition:filter .12s ease; }
+  .seg + .seg { margin-left:2px; }
+  .seg:first-child { border-radius:4px 0 0 4px; }
+  .seg:last-child { border-radius:0 4px 4px 0; }
+  .seg:hover { filter:brightness(1.14); }
+  .row .eff { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+               font-size:13px; font-weight:600; font-variant-numeric:tabular-nums;
+               text-align:right; color:var(--text-primary); }
+  .row .eff.none { color:var(--text-muted); font-weight:400; }
+  .axis { display:grid; grid-template-columns:108px 1fr 64px; gap:14px;
+           margin-top:8px; padding-top:8px; border-top:1px solid var(--rule-soft); }
+  .ticks { grid-column:2; display:flex; justify-content:space-between;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size:11px; color:var(--text-muted); }
+  .legend { display:flex; flex-wrap:wrap; gap:8px 22px; margin-top:14px;
+             padding-top:14px; border-top:1px solid var(--rule-soft);
+             font-size:13px; color:var(--text-secondary); }
+  .legend span { display:inline-flex; align-items:center; gap:8px; }
+  .key { width:12px; height:12px; border-radius:3px; flex:none; }
+  footer { border-top:1px solid var(--rule); padding-top:16px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size:12px; color:var(--text-muted);
+            display:flex; flex-wrap:wrap; gap:6px 30px; }
+  @media (max-width:620px) { .wrap { padding:28px 16px 64px; } }
+</style>
+
+<div class="viz-root"><div class="wrap">
+<header><div class="eyebrow">Messreihe · Linearnetzteil, GaN-Lader, vier USB-Netzteile</div><h1>Dieselbe Leistung, doppelter Verbrauch</h1>
+<p class="lede">Netzteile an identischen Arbeitspunkten, gemessen mit einem Janitza UMG 96RM ueber Modbus RTU. Jeder Balken zeigt, wie sich die aufgenommene Leistung in Nutzen und Verluste aufteilt.</p>
+</header>
+<section>
+<h2>Direkter Vergleich an gleichen Arbeitspunkten</h2>
+<div class="chart"><div class="plot">
+<div class="grp">
+<h3>Leerlauf — keine Abgabe</h3>
+<div class="row">
+<div class="name">Linearnetzteil</div><div class="track">
+<div class="gridlines"><i></i><i></i><i></i><i></i><i></i></div>
+<div class="bar">
+<div class="seg" style="width:11.5565%;background:var(--series-2)" title="Linearnetzteil — Verluste: 14,04 W"></div>
+</div></div>
+<div class="eff none">—</div>
+</div>
+<div class="row hl">
+<div class="name">GaN-Lader</div><div class="track">
+<div class="gridlines"><i></i><i></i><i></i><i></i><i></i></div>
+<div class="bar">
+<div class="seg" style="width:0.1852%;background:var(--series-2)" title="GaN-Lader — Verluste: 0,225 W"></div>
+</div></div>
+<div class="eff none">—</div>
+</div>
+</div>
+<div class="grp">
+<h3>20 W Abgabe · 20 V / 1 A</h3>
+<div class="row">
+<div class="name">Linearnetzteil</div><div class="track">
+<div class="gridlines"><i></i><i></i><i></i><i></i><i></i></div>
+<div class="bar">
+<div class="seg" style="width:16.4623%;background:var(--series-1)" title="Linearnetzteil — Nutzleistung am Ausgang: 20 W"></div>
+<div class="seg" style="width:27.2615%;background:var(--series-2)" title="Linearnetzteil — Verluste: 33,12 W"></div>
+</div></div>
+<div class="eff">37,7 %</div>
+</div>
+<div class="row hl">
+<div class="name">GaN-Lader</div><div class="track">
+<div class="gridlines"><i></i><i></i><i></i><i></i><i></i></div>
+<div class="bar">
+<div class="seg" style="width:16.4623%;background:var(--series-1)" title="GaN-Lader — Nutzleistung am Ausgang: 20 W"></div>
+<div class="seg" style="width:3.3830%;background:var(--series-2)" title="GaN-Lader — Verluste: 4,11 W"></div>
+</div></div>
+<div class="eff">83,0 %</div>
+</div>
+</div>
+<div class="grp">
+<h3>60 W Abgabe · 20 V / 3 A</h3>
+<div class="row">
+<div class="name">Linearnetzteil</div><div class="track">
+<div class="gridlines"><i></i><i></i><i></i><i></i><i></i></div>
+<div class="bar">
+<div class="seg" style="width:49.3868%;background:var(--series-1)" title="Linearnetzteil — Nutzleistung am Ausgang: 60 W"></div>
+<div class="seg" style="width:50.6132%;background:var(--series-2)" title="Linearnetzteil — Verluste: 61,49 W"></div>
+</div></div>
+<div class="eff">49,4 %</div>
+</div>
+<div class="row hl">
+<div class="name">GaN-Lader</div><div class="track">
+<div class="gridlines"><i></i><i></i><i></i><i></i><i></i></div>
+<div class="bar">
+<div class="seg" style="width:49.3868%;background:var(--series-1)" title="GaN-Lader — Nutzleistung am Ausgang: 60 W"></div>
+<div class="seg" style="width:5.0292%;background:var(--series-2)" title="GaN-Lader — Verluste: 6,11 W"></div>
+</div></div>
+<div class="eff">90,8 %</div>
+</div>
+</div>
+</div><div class="axis"><div class="ticks"><span>0</span><span>30</span><span>60</span><span>90</span><span>120 W</span></div></div>
+<div class="legend"><span><i class="key" style="background:var(--series-1)"></i> Nutzleistung am Ausgang</span><span><i class="key" style="background:var(--series-2)"></i> Verluste</span></div>
+</div>
+<p class="note">Der blaue Block ist innerhalb jeder Gruppe gleich breit — die Nutzleistung ist identisch. Was sich unterscheidet, ist ausschliesslich der gruene Anteil daneben.</p>
+<p class="note">Bei 60 W verheizt das Linearnetzteil <b>mehr Abwaerme, als der GaN-Lader insgesamt aufnimmt</b>. Im Leerlauf liegt der Faktor bei 62.</p>
+</section>
+<section>
+<h2>Woher die Verluste des Linearnetzteils kommen</h2>
+<div class="chart"><div class="plot">
+<div class="grp">
+<div class="row">
+<div class="name">Leerlauf</div><div class="track">
+<div class="gridlines"><i></i><i></i><i></i><i></i><i></i></div>
+<div class="bar">
+<div class="seg" style="width:11.5565%;background:var(--series-3)" title="Leerlauf — Grundlast 14,04 W: 14,04 W"></div>
+</div></div>
+<div class="eff none">—</div>
+</div>
+<div class="row">
+<div class="name">12 V / 0,25 A</div><div class="track">
+<div class="gridlines"><i></i><i></i><i></i><i></i><i></i></div>
+<div class="bar">
+<div class="seg" style="width:2.4693%;background:var(--series-1)" title="12 V / 0,25 A — Nutzleistung am Ausgang: 3 W"></div>
+<div class="seg" style="width:2.4776%;background:var(--series-2)" title="12 V / 0,25 A — Regler- und Trafoverluste: 3,01 W"></div>
+<div class="seg" style="width:11.5565%;background:var(--series-3)" title="12 V / 0,25 A — Grundlast 14,04 W: 14,04 W"></div>
+</div></div>
+<div class="eff">15,0 %</div>
+</div>
+<div class="row hl">
+<div class="name">12 V / 0,50 A</div><div class="track">
+<div class="gridlines"><i></i><i></i><i></i><i></i><i></i></div>
+<div class="bar">
+<div class="seg" style="width:4.9387%;background:var(--series-1)" title="12 V / 0,50 A — Nutzleistung am Ausgang: 6 W"></div>
+<div class="seg" style="width:3.5888%;background:var(--series-2)" title="12 V / 0,50 A — Regler- und Trafoverluste: 4,36 W"></div>
+<div class="seg" style="width:11.5565%;background:var(--series-3)" title="12 V / 0,50 A — Grundlast 14,04 W: 14,04 W"></div>
+</div></div>
+<div class="eff">24,6 %</div>
+</div>
+<div class="row hl">
+<div class="name">6 V / 1,00 A</div><div class="track">
+<div class="gridlines"><i></i><i></i><i></i><i></i><i></i></div>
+<div class="bar">
+<div class="seg" style="width:4.9387%;background:var(--series-1)" title="6 V / 1,00 A — Nutzleistung am Ausgang: 6 W"></div>
+<div class="seg" style="width:10.0420%;background:var(--series-2)" title="6 V / 1,00 A — Regler- und Trafoverluste: 12,2 W"></div>
+<div class="seg" style="width:11.5565%;background:var(--series-3)" title="6 V / 1,00 A — Grundlast 14,04 W: 14,04 W"></div>
+</div></div>
+<div class="eff">18,6 %</div>
+</div>
+<div class="row">
+<div class="name">12 V / 1,00 A</div><div class="track">
+<div class="gridlines"><i></i><i></i><i></i><i></i><i></i></div>
+<div class="bar">
+<div class="seg" style="width:9.8774%;background:var(--series-1)" title="12 V / 1,00 A — Nutzleistung am Ausgang: 12 W"></div>
+<div class="seg" style="width:5.5889%;background:var(--series-2)" title="12 V / 1,00 A — Regler- und Trafoverluste: 6,79 W"></div>
+<div class="seg" style="width:11.5565%;background:var(--series-3)" title="12 V / 1,00 A — Grundlast 14,04 W: 14,04 W"></div>
+</div></div>
+<div class="eff">36,6 %</div>
+</div>
+<div class="row">
+<div class="name">20 V / 1,00 A</div><div class="track">
+<div class="gridlines"><i></i><i></i><i></i><i></i><i></i></div>
+<div class="bar">
+<div class="seg" style="width:16.4623%;background:var(--series-1)" title="20 V / 1,00 A — Nutzleistung am Ausgang: 20 W"></div>
+<div class="seg" style="width:15.7050%;background:var(--series-2)" title="20 V / 1,00 A — Regler- und Trafoverluste: 19,08 W"></div>
+<div class="seg" style="width:11.5565%;background:var(--series-3)" title="20 V / 1,00 A — Grundlast 14,04 W: 14,04 W"></div>
+</div></div>
+<div class="eff">37,7 %</div>
+</div>
+<div class="row">
+<div class="name">20 V / 3,00 A</div><div class="track">
+<div class="gridlines"><i></i><i></i><i></i><i></i><i></i></div>
+<div class="bar">
+<div class="seg" style="width:49.3868%;background:var(--series-1)" title="20 V / 3,00 A — Nutzleistung am Ausgang: 60 W"></div>
+<div class="seg" style="width:39.0567%;background:var(--series-2)" title="20 V / 3,00 A — Regler- und Trafoverluste: 47,45 W"></div>
+<div class="seg" style="width:11.5565%;background:var(--series-3)" title="20 V / 3,00 A — Grundlast 14,04 W: 14,04 W"></div>
+</div></div>
+<div class="eff">49,4 %</div>
+</div>
+</div>
+</div><div class="axis"><div class="ticks"><span>0</span><span>30</span><span>60</span><span>90</span><span>120 W</span></div></div>
+<div class="legend"><span><i class="key" style="background:var(--series-1)"></i> Nutzleistung am Ausgang</span><span><i class="key" style="background:var(--series-2)"></i> Regler- und Trafoverluste</span><span><i class="key" style="background:var(--series-3)"></i> Grundlast 14,04 W</span></div>
+</div>
+<p class="note"><b>Die Grundlast ist in jedem Balken gleich breit</b> — sie faellt an, sobald das Geraet eingeschaltet ist. Bei 3 W Abgabe macht sie fast alle Verluste aus, bei 60 W kaum noch etwas.</p>
+<p class="note"><b>Die beiden 6-W-Punkte sind der Kern.</b> 12 V/0,5 A und 6 V/1 A liefern dieselbe Leistung, brauchen dafuer aber 24,40 W und 32,24 W. Bis 12 V ist die Zwischenkreisspannung fest — der Laengsregler verheizt die Differenz.</p>
+</section>
+<section>
+<h2>Vier USB-Netzteile — und warum der Arbeitspunkt entscheidet</h2>
+<div class="chart"><div class="plot">
+<div class="grp">
+<h3>5 V / 1 A — alle vier Kandidaten</h3>
+<div class="row hl">
+<div class="name">China USB-A  (1)</div><div class="track">
+<div class="gridlines"><i></i><i></i><i></i><i></i><i></i></div>
+<div class="bar">
+<div class="seg" style="width:24.4810%;background:var(--series-1)" title="China USB-A  (1) — Nutzleistung am Ausgang: 5,141 W"></div>
+<div class="seg" style="width:7.9571%;background:var(--series-2)" title="China USB-A  (1) — Verluste: 1,671 W"></div>
+</div></div>
+<div class="eff">75,5 %</div>
+</div>
+<div class="row hl">
+<div class="name">China USB-A  (4)</div><div class="track">
+<div class="gridlines"><i></i><i></i><i></i><i></i><i></i></div>
+<div class="bar">
+<div class="seg" style="width:25.7762%;background:var(--series-1)" title="China USB-A  (4) — Nutzleistung am Ausgang: 5,413 W"></div>
+<div class="seg" style="width:8.4286%;background:var(--series-2)" title="China USB-A  (4) — Verluste: 1,77 W"></div>
+</div></div>
+<div class="eff">75,4 %</div>
+</div>
+<div class="row">
+<div class="name">Samsung/Apple (2)</div><div class="track">
+<div class="gridlines"><i></i><i></i><i></i><i></i><i></i></div>
+<div class="bar">
+<div class="seg" style="width:24.1381%;background:var(--series-1)" title="Samsung/Apple (2) — Nutzleistung am Ausgang: 5,069 W"></div>
+<div class="seg" style="width:25.3190%;background:var(--series-2)" title="Samsung/Apple (2) — Verluste: 5,317 W"></div>
+</div></div>
+<div class="eff">48,8 %</div>
+</div>
+<div class="row">
+<div class="name">Samsung/Apple (3)</div><div class="track">
+<div class="gridlines"><i></i><i></i><i></i><i></i><i></i></div>
+<div class="bar">
+<div class="seg" style="width:23.5571%;background:var(--series-1)" title="Samsung/Apple (3) — Nutzleistung am Ausgang: 4,947 W"></div>
+<div class="seg" style="width:25.4810%;background:var(--series-2)" title="Samsung/Apple (3) — Verluste: 5,351 W"></div>
+</div></div>
+<div class="eff">48,0 %</div>
+</div>
+</div>
+<div class="grp">
+<h3>9 V / 2 A — dieselben Markengeraete am Nennpunkt</h3>
+<div class="row hl">
+<div class="name">Samsung/Apple (2)</div><div class="track">
+<div class="gridlines"><i></i><i></i><i></i><i></i><i></i></div>
+<div class="bar">
+<div class="seg" style="width:85.7143%;background:var(--series-1)" title="Samsung/Apple (2) — Nutzleistung am Ausgang: 18 W"></div>
+<div class="seg" style="width:10.1810%;background:var(--series-2)" title="Samsung/Apple (2) — Verluste: 2,138 W"></div>
+</div></div>
+<div class="eff">89,4 %</div>
+</div>
+<div class="row hl">
+<div class="name">Samsung/Apple (3)</div><div class="track">
+<div class="gridlines"><i></i><i></i><i></i><i></i><i></i></div>
+<div class="bar">
+<div class="seg" style="width:85.7143%;background:var(--series-1)" title="Samsung/Apple (3) — Nutzleistung am Ausgang: 18 W"></div>
+<div class="seg" style="width:10.5190%;background:var(--series-2)" title="Samsung/Apple (3) — Verluste: 2,209 W"></div>
+</div></div>
+<div class="eff">89,1 %</div>
+</div>
+</div>
+</div><div class="axis"><div class="ticks"><span>0</span><span>5</span><span>10</span><span>15</span><span>20 W</span></div></div>
+<div class="legend"><span><i class="key" style="background:var(--series-1)"></i> Nutzleistung am Ausgang</span><span><i class="key" style="background:var(--series-2)"></i> Verluste</span></div>
+</div>
+<p class="note"><b>Die obere Gruppe laedt zu einem Fehlschluss ein.</b> Bei 5 V und 1 A schlagen die billigen USB-A-Lader ohne PD die Markengeraete deutlich — aber nicht, weil sie besser gebaut waeren. Ein USB-A-Lader ist fuer 5–10 W ausgelegt und laeuft dort im Optimum; ein USB-C-Lader mit 25–45 W laeuft bei 10–20 % Last, wo sein fester Eigenbedarf durchschlaegt.</p>
+<p class="note"><b>Dieselben zwei Geraete am eigenen Nennpunkt</b> erreichen 89 % — ueber 40 Prozentpunkte mehr, ohne dass sich am Geraet etwas geaendert haette.</p>
+</section>
+<footer><span>Janitza UMG 96RM · Modbus RTU</span><span>200 ms Messfenster · 2026-07-20</span></footer>
+</div></div>

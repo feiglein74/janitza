@@ -1,0 +1,519 @@
+<title>Messplatz UMG 96RM — Schaltbild</title>
+
+<style>
+  :root {
+    --paper:      #F2F4F6;
+    --sheet:      #FFFFFF;
+    --ink:        #14181D;
+    --ink-soft:   #5A646E;
+    --ink-faint:  #9AA4AE;
+    --rule:       #C9D1D8;
+    --rule-soft:  #E3E8EC;
+    --accent:     #C2700B;
+    --accent-bg:  #FBEFDC;
+    --danger:     #B3261E;
+    --danger-bg:  #FBE4E2;
+    --cond-l:     #7B4A2D;
+    --cond-n:     #2B5CA8;
+    --cond-pe:    #4B8A2B;
+    --box:        #EDF1F4;
+    --box-line:   #46525E;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper:     #0D1116;
+      --sheet:     #141A21;
+      --ink:       #DDE3E9;
+      --ink-soft:  #94A0AC;
+      --ink-faint: #5E6B77;
+      --rule:      #2C3641;
+      --rule-soft: #1E262E;
+      --accent:    #E9A44F;
+      --accent-bg: #2E2413;
+      --danger:    #FF7A6E;
+      --danger-bg: #33191A;
+      --cond-l:    #C08A5E;
+      --cond-n:    #6B9CE0;
+      --cond-pe:   #7FC24E;
+      --box:       #1C242C;
+      --box-line:  #7C8894;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper:     #0D1116;
+    --sheet:     #141A21;
+    --ink:       #DDE3E9;
+    --ink-soft:  #94A0AC;
+    --ink-faint: #5E6B77;
+    --rule:      #2C3641;
+    --rule-soft: #1E262E;
+    --accent:    #E9A44F;
+    --accent-bg: #2E2413;
+    --danger:    #FF7A6E;
+    --danger-bg: #33191A;
+    --cond-l:    #C08A5E;
+    --cond-n:    #6B9CE0;
+    --cond-pe:   #7FC24E;
+    --box:       #1C242C;
+    --box-line:  #7C8894;
+  }
+  :root[data-theme="light"] {
+    --paper:     #F2F4F6;
+    --sheet:     #FFFFFF;
+    --ink:       #14181D;
+    --ink-soft:  #5A646E;
+    --ink-faint: #9AA4AE;
+    --rule:      #C9D1D8;
+    --rule-soft: #E3E8EC;
+    --accent:    #C2700B;
+    --accent-bg: #FBEFDC;
+    --danger:    #B3261E;
+    --danger-bg: #FBE4E2;
+    --cond-l:    #7B4A2D;
+    --cond-n:    #2B5CA8;
+    --cond-pe:   #4B8A2B;
+    --box:       #EDF1F4;
+    --box-line:  #46525E;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 40px 24px 96px;
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+  }
+
+  header { display: flex; flex-direction: column; gap: 10px; }
+
+  .eyebrow {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  h1 {
+    margin: 0;
+    font-size: clamp(26px, 4vw, 38px);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+
+  .lede {
+    margin: 0;
+    max-width: 62ch;
+    color: var(--ink-soft);
+    font-size: 16px;
+  }
+
+  h2 {
+    margin: 0 0 4px;
+    font-size: 19px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  section { display: flex; flex-direction: column; gap: 16px; }
+
+  .sheet {
+    background: var(--sheet);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 20px;
+    overflow-x: auto;
+  }
+
+  svg { display: block; min-width: 860px; width: 100%; height: auto; }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 24px;
+    padding-top: 16px;
+    margin-top: 16px;
+    border-top: 1px solid var(--rule-soft);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 12px;
+    color: var(--ink-soft);
+  }
+  .legend span { display: inline-flex; align-items: center; gap: 8px; }
+  .swatch { width: 22px; height: 3px; border-radius: 2px; }
+
+  ol.notes {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    counter-reset: n;
+  }
+  ol.notes li {
+    display: grid;
+    grid-template-columns: 30px 1fr;
+    gap: 14px;
+    padding: 13px 0;
+    border-bottom: 1px solid var(--rule-soft);
+    align-items: start;
+  }
+  ol.notes li::before {
+    counter-increment: n;
+    content: counter(n);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    border-radius: 50%;
+    width: 24px; height: 24px;
+    display: grid; place-items: center;
+    margin-top: 1px;
+  }
+  ol.notes li.crit::before { color: var(--danger); border-color: var(--danger); }
+  ol.notes b { font-weight: 600; }
+  ol.notes p { margin: 3px 0 0; color: var(--ink-soft); font-size: 15px; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 15px;
+    font-variant-numeric: tabular-nums;
+  }
+  th, td { text-align: left; padding: 10px 14px 10px 0; border-bottom: 1px solid var(--rule-soft); }
+  th {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    font-weight: 500;
+  }
+  td.mono, th.mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  tr.pick td { color: var(--accent); font-weight: 600; }
+
+  .callout {
+    border-left: 3px solid var(--danger);
+    background: var(--danger-bg);
+    padding: 14px 18px;
+    border-radius: 0 3px 3px 0;
+    font-size: 15px;
+  }
+  .callout b { font-weight: 600; }
+
+  footer {
+    border-top: 1px solid var(--rule);
+    padding-top: 18px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 12px;
+    color: var(--ink-faint);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 32px;
+  }
+
+  @media (max-width: 620px) {
+    .wrap { padding: 28px 16px 64px; gap: 32px; }
+    ol.notes li { grid-template-columns: 26px 1fr; gap: 11px; }
+  }
+</style>
+
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">Prüfplatz · Einzelgeräte-Verbrauchsmessung</div>
+    <h1>Messplatz UMG 96RM</h1>
+    <p class="lede">Prinzipschaltbild für die Verbrauchsmessung an wechselnden Einzelgeräten.
+      Einphasig 230 V, Strommessung über Wandler mit sechs Windungen, Lastabwurf über
+      Komparator und Schützselbsthaltung.</p>
+  </header>
+
+  <section>
+    <h2>Schaltbild</h2>
+    <div class="sheet">
+      <svg viewBox="0 0 1000 700" role="img" aria-label="Prinzipschaltbild des Messplatzes">
+
+        <defs>
+          <marker id="ar" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+            <path d="M0,0 L7,3.5 L0,7 z" fill="var(--ink-faint)"/>
+          </marker>
+        </defs>
+
+        <g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace"
+           font-size="11" fill="var(--ink)">
+
+          <!-- ===== LEISTUNGSKREIS ===== -->
+          <text x="34" y="46" font-size="12" font-weight="600" fill="var(--ink-soft)">LEISTUNGSKREIS</text>
+
+          <!-- Leiter -->
+          <line x1="34" y1="90"  x2="820" y2="90"  stroke="var(--cond-l)"  stroke-width="2.5"/>
+          <line x1="34" y1="126" x2="820" y2="126" stroke="var(--cond-n)"  stroke-width="2.5"/>
+          <line x1="34" y1="162" x2="820" y2="162" stroke="var(--cond-pe)" stroke-width="2.5"/>
+
+          <text x="34" y="84"  fill="var(--cond-l)"  font-weight="600">L</text>
+          <text x="34" y="120" fill="var(--cond-n)"  font-weight="600">N</text>
+          <text x="34" y="156" fill="var(--cond-pe)" font-weight="600">PE</text>
+
+          <!-- Hauptschalter -->
+          <rect x="70" y="70" width="74" height="74" rx="2" fill="var(--box)" stroke="var(--box-line)"/>
+          <text x="107" y="100" text-anchor="middle">Haupt-</text>
+          <text x="107" y="114" text-anchor="middle">schalter</text>
+
+          <!-- RCD -->
+          <rect x="164" y="70" width="94" height="74" rx="2" fill="var(--box)" stroke="var(--danger)" stroke-width="1.5"/>
+          <text x="211" y="94" text-anchor="middle" font-weight="600" fill="var(--danger)">FI / RCD</text>
+          <text x="211" y="110" text-anchor="middle">30 mA</text>
+          <text x="211" y="124" text-anchor="middle">Typ A</text>
+          <circle cx="258" cy="62" r="9" fill="var(--danger)"/>
+          <text x="258" y="66" text-anchor="middle" fill="#fff" font-weight="700">1</text>
+
+          <!-- LS -->
+          <rect x="278" y="70" width="74" height="74" rx="2" fill="var(--box)" stroke="var(--box-line)"/>
+          <text x="315" y="100" text-anchor="middle" font-weight="600">LS</text>
+          <text x="315" y="116" text-anchor="middle">B2 … B4</text>
+          <circle cx="352" cy="62" r="9" fill="var(--accent)"/>
+          <text x="352" y="66" text-anchor="middle" fill="#fff" font-weight="700">5</text>
+
+          <!-- Schütz Hauptkontakt -->
+          <rect x="392" y="70" width="74" height="74" rx="2" fill="var(--box)" stroke="var(--box-line)"/>
+          <text x="429" y="100" text-anchor="middle" font-weight="600">K1</text>
+          <text x="429" y="116" text-anchor="middle">Schütz</text>
+
+          <!-- Stromwandler -->
+          <circle cx="560" cy="90" r="26" fill="none" stroke="var(--accent)" stroke-width="2.5"/>
+          <text x="560" y="42" text-anchor="middle" font-weight="600" fill="var(--accent)">Wandler 30/5</text>
+          <text x="560" y="56" text-anchor="middle" fill="var(--accent)">6 Windungen → 5/5</text>
+          <circle cx="600" cy="62" r="9" fill="var(--accent)"/>
+          <text x="600" y="66" text-anchor="middle" fill="#fff" font-weight="700">4</text>
+
+          <!-- Steckdose -->
+          <rect x="660" y="70" width="120" height="110" rx="2" fill="var(--box)" stroke="var(--box-line)"/>
+          <circle cx="720" cy="112" r="22" fill="none" stroke="var(--box-line)" stroke-width="1.5"/>
+          <circle cx="712" cy="112" r="3.5" fill="var(--box-line)"/>
+          <circle cx="728" cy="112" r="3.5" fill="var(--box-line)"/>
+          <text x="720" y="160" text-anchor="middle" font-weight="600">Prüfling</text>
+
+          <!-- ===== SPANNUNGSABGRIFF ===== -->
+          <!-- Sicherung im Spannungspfad -->
+          <line x1="330" y1="90"  x2="330" y2="214" stroke="var(--cond-l)" stroke-width="1.5" stroke-dasharray="5 3"/>
+          <line x1="352" y1="126" x2="352" y2="214" stroke="var(--cond-n)" stroke-width="1.5" stroke-dasharray="5 3"/>
+          <rect x="316" y="188" width="28" height="16" rx="2" fill="var(--sheet)" stroke="var(--danger)" stroke-width="1.5"/>
+          <text x="252" y="200" text-anchor="end" fill="var(--danger)">Sicherung 10 A, Char. C</text>
+          <circle cx="300" cy="196" r="9" fill="var(--danger)"/>
+          <text x="300" y="200" text-anchor="middle" fill="#fff" font-weight="700">2</text>
+
+          <!-- Wandler-Sekundär mit Kurzschlussbrücke -->
+          <line x1="560" y1="116" x2="560" y2="214" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="5 3"/>
+          <line x1="586" y1="116" x2="586" y2="214" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="5 3"/>
+          <line x1="548" y1="176" x2="598" y2="176" stroke="var(--danger)" stroke-width="2"/>
+          <text x="612" y="172" fill="var(--danger)">Kurzschluss-</text>
+          <text x="612" y="186" fill="var(--danger)">brücken</text>
+          <circle cx="700" cy="212" r="9" fill="var(--danger)"/>
+          <text x="700" y="216" text-anchor="middle" fill="#fff" font-weight="700">3</text>
+          <line x1="612" y1="204" x2="688" y2="211" stroke="var(--ink-faint)" stroke-width="1"/>
+
+          <!-- ===== JANITZA ===== -->
+          <rect x="250" y="240" width="400" height="150" rx="3" fill="var(--sheet)" stroke="var(--ink)" stroke-width="2"/>
+          <text x="270" y="268" font-size="13" font-weight="600">Janitza UMG 96RM</text>
+          <text x="270" y="286" fill="var(--ink-soft)">Messtechnik — nicht im Lastpfad</text>
+
+          <!-- Klemmen -->
+          <text x="270" y="316" fill="var(--ink-soft)">Klemme</text>
+          <text x="270" y="334" font-weight="600">3 / 6</text>
+          <text x="322" y="334">Spannung V1 / VN</text>
+          <text x="270" y="352" font-weight="600">7 / 8</text>
+          <text x="322" y="352">Strom I1 (S1 / S2)</text>
+          <text x="270" y="370" font-weight="600">13 / 14</text>
+          <text x="322" y="370">Digitalausgang 1</text>
+          <text x="480" y="334" font-weight="600">16 / 17</text>
+          <text x="532" y="334">RS485 B / A</text>
+          <text x="480" y="352" font-weight="600">1 / 2</text>
+          <text x="532" y="352">Versorgung</text>
+
+          <!-- Anschlüsse in die Janitza -->
+          <line x1="330" y1="214" x2="330" y2="240" stroke="var(--cond-l)" stroke-width="1.5" stroke-dasharray="5 3"/>
+          <line x1="352" y1="214" x2="352" y2="240" stroke="var(--cond-n)" stroke-width="1.5" stroke-dasharray="5 3"/>
+          <path d="M560,214 L560,226 L420,226 L420,240" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="5 3"/>
+          <path d="M586,214 L586,232 L440,232 L440,240" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="5 3"/>
+
+          <!-- RS485 zum PC -->
+          <path d="M650,300 L720,300 L720,268" fill="none" stroke="var(--ink-faint)" stroke-width="1.5" stroke-dasharray="3 3" marker-end="url(#ar)"/>
+          <text x="736" y="272" fill="var(--ink-soft)">PC · USB-RS485</text>
+
+          <!-- ===== STEUERKREIS ===== -->
+          <text x="34" y="440" font-size="12" font-weight="600" fill="var(--ink-soft)">STEUERKREIS</text>
+
+          <!-- Rails -->
+          <line x1="60" y1="470" x2="900" y2="470" stroke="var(--cond-l)" stroke-width="2.5"/>
+          <line x1="60" y1="650" x2="900" y2="650" stroke="var(--cond-n)" stroke-width="2.5"/>
+          <text x="34" y="464" fill="var(--cond-l)" font-weight="600">L</text>
+          <text x="34" y="644" fill="var(--cond-n)" font-weight="600">N</text>
+          <!-- Abgriff aus dem Leistungskreis, nach LS, vor Schütz -->
+          <path d="M375,90 L375,420 L60,420 L60,470" fill="none" stroke="var(--cond-l)" stroke-width="1.5" stroke-dasharray="5 3"/>
+
+          <!-- Notaus -->
+          <line x1="180" y1="470" x2="180" y2="500" stroke="var(--ink)" stroke-width="1.5"/>
+          <rect x="140" y="500" width="80" height="42" rx="2" fill="var(--danger-bg)" stroke="var(--danger)" stroke-width="1.5"/>
+          <text x="180" y="518" text-anchor="middle" font-weight="600" fill="var(--danger)">NOT-AUS</text>
+          <text x="180" y="532" text-anchor="middle" fill="var(--danger)">rastend</text>
+          <line x1="180" y1="542" x2="180" y2="650" stroke="var(--ink)" stroke-width="1.5"/>
+          <circle cx="232" cy="521" r="9" fill="var(--danger)"/>
+          <text x="232" y="525" text-anchor="middle" fill="#fff" font-weight="700">6</text>
+
+          <!-- Koppelrelais-Kontakt -->
+          <line x1="360" y1="470" x2="360" y2="500" stroke="var(--ink)" stroke-width="1.5"/>
+          <rect x="312" y="500" width="96" height="42" rx="2" fill="var(--accent-bg)" stroke="var(--accent)" stroke-width="1.5"/>
+          <text x="360" y="518" text-anchor="middle" font-weight="600" fill="var(--accent)">Koppelrelais</text>
+          <text x="360" y="532" text-anchor="middle" fill="var(--accent)">Öffner</text>
+          <line x1="360" y1="542" x2="360" y2="650" stroke="var(--ink)" stroke-width="1.5"/>
+          <circle cx="420" cy="521" r="9" fill="var(--accent)"/>
+          <text x="420" y="525" text-anchor="middle" fill="#fff" font-weight="700">7</text>
+
+          <!-- Ansteuerung Koppelrelais von Klemme 14 -->
+          <path d="M470,370 L470,412 L360,412 L360,470" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="3 3"/>
+          <text x="482" y="374" fill="var(--accent)">Klemme 14 · 24 V extern</text>
+
+          <!-- Start + Selbsthaltung -->
+          <line x1="600" y1="470" x2="600" y2="490" stroke="var(--ink)" stroke-width="1.5"/>
+          <line x1="548" y1="490" x2="652" y2="490" stroke="var(--ink)" stroke-width="1.5"/>
+          <rect x="512" y="500" width="72" height="42" rx="2" fill="var(--box)" stroke="var(--box-line)"/>
+          <text x="548" y="518" text-anchor="middle" font-weight="600">START</text>
+          <text x="548" y="532" text-anchor="middle">Schließer</text>
+          <rect x="616" y="500" width="72" height="42" rx="2" fill="var(--box)" stroke="var(--box-line)"/>
+          <text x="652" y="518" text-anchor="middle" font-weight="600">K1</text>
+          <text x="652" y="532" text-anchor="middle">Selbsthalt.</text>
+          <line x1="548" y1="542" x2="548" y2="562" stroke="var(--ink)" stroke-width="1.5"/>
+          <line x1="652" y1="542" x2="652" y2="562" stroke="var(--ink)" stroke-width="1.5"/>
+          <line x1="548" y1="562" x2="652" y2="562" stroke="var(--ink)" stroke-width="1.5"/>
+          <line x1="600" y1="562" x2="600" y2="586" stroke="var(--ink)" stroke-width="1.5"/>
+          <circle cx="712" cy="521" r="9" fill="var(--accent)"/>
+          <text x="712" y="525" text-anchor="middle" fill="#fff" font-weight="700">8</text>
+
+          <!-- Spule K1 -->
+          <rect x="562" y="586" width="76" height="36" rx="2" fill="var(--box)" stroke="var(--box-line)"/>
+          <text x="600" y="608" text-anchor="middle" font-weight="600">K1 A1/A2</text>
+          <line x1="600" y1="622" x2="600" y2="650" stroke="var(--ink)" stroke-width="1.5"/>
+
+        </g>
+      </svg>
+
+      <div class="legend">
+        <span><i class="swatch" style="background:var(--cond-l)"></i> Außenleiter L</span>
+        <span><i class="swatch" style="background:var(--cond-n)"></i> Neutralleiter N</span>
+        <span><i class="swatch" style="background:var(--cond-pe)"></i> Schutzleiter PE</span>
+        <span><i class="swatch" style="background:var(--accent)"></i> Mess- und Signalkreis</span>
+        <span><i class="swatch" style="background:var(--danger)"></i> Schutzfunktion</span>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Erläuterungen</h2>
+    <ol class="notes">
+      <li class="crit">
+        <div><b>Fehlerstromschutzschalter, 30 mA Typ A</b>
+        <p>Der Personenschutz und die größte Lücke in der ursprünglichen Kette. Kein
+          Leitungsschutzschalter ersetzt ihn. Bei Prüflingen mit Frequenzumrichter oder
+          DC-Anteil im Fehlerstrom stattdessen Typ B.</p></div>
+      </li>
+      <li class="crit">
+        <div><b>Eigene Absicherung der Spannungspfade</b>
+        <p>Der Anschlussplan im Handbuch (S. 106) fordert für die Spannungsmesseingänge eine
+          Überstrom-Schutzeinrichtung mit 10 A, Charakteristik C. Die Messleitungen zu V1 und
+          VN sind dünn und sonst ungeschützt.</p></div>
+      </li>
+      <li class="crit">
+        <div><b>Kurzschlussbrücken im Wandler-Sekundärkreis</b>
+        <p>Ein Stromwandler darf sekundärseitig niemals offen betrieben werden, solange primär
+          Strom fließt — es entstehen gefährlich hohe Spannungen an den Klemmen. Vor jedem
+          Abklemmen der Janitza-Stromeingänge erst brücken, dann trennen.</p></div>
+      </li>
+      <li>
+        <div><b>Wandler 30/5 mit sechs Windungen</b>
+        <p>Sechs Durchführungen ergeben effektiv 5/5, also 1:1. Alle Windungen in derselben
+          Richtung, Polarität K→L beziehungsweise S1→S2 einhalten. Die Parameter 010/012
+          bleiben damit auf 5/5 stehen.</p></div>
+      </li>
+      <li>
+        <div><b>Leitungsschutzschalter passend zur Windungszahl</b>
+        <p>Bei sechs Windungen liegt der Messbereich bei 5 A primär. Windungszahl und Vorsicherung
+          sind ein Paar und werden gemeinsam geändert — siehe Tabelle unten.</p></div>
+      </li>
+      <li>
+        <div><b>Not-Aus, rastend</b>
+        <p>Wirkt auf den Haltekreis, nicht auf den Laststrom. Nach dem Entriegeln läuft nichts von
+          allein wieder an, weil die Selbsthaltung neu gestartet werden muss.</p></div>
+      </li>
+      <li>
+        <div><b>Koppelrelais am Digitalausgang 1</b>
+        <p>Der Komparator der Janitza schaltet Klemme 14 gegen 13; die externe Hilfsspannung von
+          24 V treibt die Relaisspule, die höchstens 50 mA ziehen darf. Der Öffnerkontakt
+          unterbricht den Haltekreis — das Relais schaltet nie den Laststrom.</p></div>
+      </li>
+      <li>
+        <div><b>Selbsthaltung über K1</b>
+        <p>Start-Taster und Hilfskontakt liegen parallel. Fällt die Spannung aus oder löst der
+          Komparator aus, verliert das Schütz seinen Haltekreis und bleibt abgefallen —
+          Wiederanlaufschutz ohne zusätzliche Bauteile.</p></div>
+      </li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>Windungszahl und Absicherung</h2>
+    <table>
+      <thead>
+        <tr>
+          <th class="mono">Windungen</th>
+          <th class="mono">effektiv</th>
+          <th class="mono">Messbereich</th>
+          <th class="mono">bei 230 V</th>
+          <th class="mono">Parameter 010</th>
+          <th class="mono">LS-Schalter</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="mono">1</td><td class="mono">30/5</td><td class="mono">0–30 A</td><td class="mono">~6,9 kW</td><td class="mono">30</td><td class="mono">B25</td></tr>
+        <tr><td class="mono">2</td><td class="mono">15/5</td><td class="mono">0–15 A</td><td class="mono">~3,4 kW</td><td class="mono">15</td><td class="mono">B13</td></tr>
+        <tr><td class="mono">3</td><td class="mono">10/5</td><td class="mono">0–10 A</td><td class="mono">~2,3 kW</td><td class="mono">10</td><td class="mono">B8</td></tr>
+        <tr class="pick"><td class="mono">6</td><td class="mono">5/5</td><td class="mono">0–5 A</td><td class="mono">~1,15 kW</td><td class="mono">5</td><td class="mono">B2 … B4</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>Was das Schaltbild nicht leistet</h2>
+    <div class="callout">
+      <b>Der Komparator ist kein Schutzorgan.</b> Seine Reaktionszeit beträgt 210 ms zuzüglich
+      einer Vorlaufzeit in ganzen Sekunden. Er greift gegen dauerhafte Überlast — etwa einen zu
+      großen Prüfling — und ist gegen einen Kurzschluss wirkungslos. RCD und Leitungsschutzschalter
+      bleiben die eigentlichen Schutzeinrichtungen.
+    </div>
+    <p style="margin:0;color:var(--ink-soft);font-size:15px;max-width:66ch">Dies ist ein
+      Prinzipschaltbild zur Verständigung über die Topologie, kein ausführungsreifer Stromlaufplan:
+      Querschnitte, Schützauswahl, Klemmenbelegung und Betriebsmittelkennzeichnung fehlen. Ein
+      Messplatz, an dem fremde Geräte unter Spannung gehen, gehört vor der Inbetriebnahme von einer
+      Elektrofachkraft geprüft.</p>
+  </section>
+
+  <footer>
+    <span>Janitza UMG 96RM · Grundgerät</span>
+    <span>Modbus RTU · Adr. 2 · 38400 8N1</span>
+    <span>einphasig 230 V</span>
+  </footer>
+
+</div>
