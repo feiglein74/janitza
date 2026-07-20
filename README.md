@@ -190,6 +190,50 @@ oder einen isolierten Adapter verwenden.
 **Abschlusswiderstände:** Das UMG hat keine, weder eingebaut noch als Jumper.
 Bei längeren Leitungen 120 Ω extern über Klemme 16/17.
 
+### Leitung und Baudrate
+
+Dokumentiert (Handbuch S. 33): geschirmtes verdrilltes Kabel, etwa
+Li2YCY(TP) 2×2×0,22, **max. 1200 m bei 38400 Baud**, höchstens 32 Teilnehmer
+je Segment. **Für ungeschirmte Verlegung gibt es keine Angabe** — sie ist
+schlicht nicht vorgesehen.
+
+Aus der Technik, nicht aus dem Handbuch:
+
+- **Verdrillt ist wichtiger als geschirmt.** RS485 überträgt differentiell;
+  eine Störung, die beide Adern gleich trifft, hebt sich am Empfänger auf.
+  Das leistet die Verdrillung. Der Schirm ist die zweite Verteidigungslinie.
+  Zwei einzeln verlegte Adern sind deutlich schlechter als ein ungeschirmtes
+  verdrilltes Paar.
+- **Auf Tischlänge unkritisch.** Unter etwa zehn Metern in ruhiger Umgebung
+  läuft ungeschirmtes verdrilltes Kabel problemlos — der hiesige Aufbau
+  belegt das mit CAT-Kabel und ohne Abschlusswiderstände.
+- **Ein schaltendes Schütz ändert das.** Der Lichtbogen beim Öffnen erzeugt
+  breitbandiges Störspektrum direkt neben der Datenleitung. Spätestens dann
+  ist der Schirm keine Formalie.
+
+**Warum Janitza CAT-Kabel ablehnt, ist nicht der Schirm** — CAT ist verdrillt
+und oft geschirmt. Es ist der **Wellenwiderstand**: CAT liegt bei 100 Ω,
+RS485 erwartet 120 Ω. Die Fehlanpassung erzeugt Reflexionen. Über wenige
+Meter bedeutungslos, weil die Laufzeit gegen die Bitdauer verschwindet — über
+hundert Meter bei hoher Baudrate nicht mehr.
+
+**Eine höhere Baudrate bringt hier nichts.** Das Gerät aktualisiert alle
+200 ms, ein voller Lesevorgang über 52 Register dauert gemessen 47 ms. Es
+wird also ohnehin drei Viertel des Fensters gewartet. 115200 würde das auf
+etwa 20 ms drücken und 27 ms schenken, mit denen nichts anzufangen ist.
+
+Umgekehrt ist die **niedrigere Baudrate die robustere**: längere Bitdauer,
+größerer Störabstand, mehr Toleranz gegen Reflexionen und Einkopplungen.
+38400 ist damit nicht nur ausreichend, sondern die bessere Wahl.
+
+Zwei Fälle, in denen das kippt:
+
+- **Mehrere Geräte am Bus.** Bei 47 ms je Abfrage passen etwa vier
+  Teilnehmer in ein 200-ms-Fenster.
+- **Das vollständige Oberschwingungsspektrum aller neun Kanäle** — 720
+  Register in sechs Telegrammen, zusammen deutlich über 200 ms. Einphasig
+  mit zwei Kanälen sind es rund 90 ms, das passt.
+
 Hat der Adapter einen Schiebeschalter RS232/RS485, muss er auf **RS485**
 stehen. Die beiden Zweige sind wechselseitig abgeschaltet.
 
