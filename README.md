@@ -368,6 +368,7 @@ Strompfad, Wandlerverhältnis 5/5, Ansprechschwelle 0 mA.
 | `gan_last.csv` | GaN-USB-Lader 140 W | 20 V bei 0,25 / 1 / 3 A, dazu Ruhezustände |
 | `usb_vergleich.csv` | 4 USB-Netzteile | 5 V/1 A alle vier, dazu 9 V/2 A für 2 und 3 |
 | `spektrum_gan_*.csv` | GaN-USB-Lader | Oberschwingungsspektren, drei Arbeitspunkte |
+| `heisskleber.csv` | PTC-Klebepistole | Kaltstart und Aufheizen, 220 s |
 | `live.csv`, `luefter.csv` | Versorgung der elektronischen Last | Ruhezustände und Lüfterverhalten |
 
 Dazu die Eingabedateien der Grafiken: `wirkungsgrad.json` (Arbeitspunkte) und
@@ -381,6 +382,7 @@ erzeugt:
 | `wirkungsgrad.html` | Linearnetzteil, GaN-Lader und vier USB-Netzteile an gleichen Arbeitspunkten |
 | `verlauf_usb.html` | Zeitverlauf der USB-Messreihe, mit Zoom auf die Leerlaufzustände |
 | `spektren.html` | Oberschwingungsspektren des GaN-Laders, relativ und absolut |
+| `heisskleber.html` | Klebepistole: Wirkleistung und Klirrfaktor über die Zeit |
 | `schaltbild.html` | Prinzipschaltbild des Prüfplatzes |
 
 ### Referenzmessung: 40-W-Glühlampe
@@ -656,6 +658,48 @@ Wattzahlen bleiben, wie gemessen. Relevant wird die Ordnungsverteilung erst
 bei der Bewertung von Netzrückwirkungen, wo die 3. und 5. sich anders
 auswirken als die 7. oder 11.
 
+### Referenzmessung: PTC-Klebepistole (nichtlineare Heizung)
+
+Ein Verbrauchertyp, der weder ohmsch (Glühlampe) noch elektronisch geregelt
+(Netzteile) ist: ein Heizelement mit stark temperaturabhängigem Widerstand.
+`heisskleber.html` zeigt den Verlauf, `messungen/heisskleber.csv` die Daten.
+
+**Kaltstart:**
+
+```
+ t=0 s   440 W   1,96 A   THD  8,4 %   ← Einschaltspitze, 10x Betrieb
+ t=1 s    66 W   0,30 A   THD 24,5 %
+ t=20 s   46 W   0,21 A   THD 25,4 %   ← Maximum
+ Ende     27 W   0,12 A   THD 24,8 %   ← Selbstregelung, noch fallend
+```
+
+Drei Phänomene in einer Messung:
+
+**PTC-Einschaltstrom.** Das kalte Element ist niederohmig und zieht das
+Zehnfache des Betriebsstroms. Anders als der Glühlampen-Einschaltstrom
+(≈ 100 ms, für dieses Gerät unsichtbar) klingt er über **rund eine Sekunde**
+ab und fällt damit voll ins 200-ms-Raster.
+
+**Der Klirrfaktor folgt der Steilheit der Kennlinie, nicht der Temperatur.**
+Kalt liegt das Element auf dem flachen Teil der R(T)-Kurve — dR/dT klein,
+kaum Verzerrung, 8 %. Im heißen, steilen Regelbereich wird der Widerstand
+stark temperaturempfindlich; die mit 100 Hz pulsierende Leistung moduliert
+ihn tief, und die **dritte Harmonische** springt auf 25 %. Das Spektrum ist
+fast rein Grundschwingung + 3. Ordnung, gerade Ordnungen unter 0,2 % —
+symmetrisch, also kein Gleichrichter; und cosφ bleibt durchgehend bei 0,99,
+also kein Phasenanschnitt. Es ist reine thermische Modulation:
+
+> I ∝ U · (1 + m·cos 2ωt) = cos ωt + (m/2)(cos ωt + **cos 3ωt**)
+
+**PTC-Selbstregelung.** Ohne dass Kleber durchgeschoben wird, regelt sich die
+Aufnahme über Minuten auf rund 27 W herunter — gerade genug, um die
+Wärmeverluste zu decken.
+
+Nebenbei der erste Lasttest des Steuergehäuses (RS485, Relais und
+Bedienelemente in einem Kasten): 1101 Messpunkte durch den Schaltmoment
+lückenlos, kein verlorener Wert. **Die Schaltstörung schlägt nicht auf die
+Datenleitung durch.**
+
 ### Falle: Eigenversorgung der elektronischen Last
 
 Die Versorgung der elektronischen Last gehört **nicht** in den gemessenen
@@ -825,6 +869,14 @@ Erzeugt eigenständige HTML-Dateien ohne externe Abhängigkeiten — CSS und
 JavaScript inline, Daten einkopiert. Lokal im Browser zu öffnen und ohne Netz
 weiterzugeben; die Artefakt-Umgebung blockiert externe Anfragen, deshalb kommt
 keine Chart-Bibliothek zum Einsatz.
+
+Mehrere `-c`-Spalten ergeben je ein Panel auf gemeinsamer Zeitachse, `--marke`
+setzt eine senkrechte Markierung:
+
+```bash
+python3 umg_grafik.py verlauf messungen/heisskleber.csv \
+    -c p_sum -c thd_i_l1 --marke "16.0:Last ein" -o heisskleber.html
+```
 
 `verlauf` liest die CSV direkt und verdichtet sie auf etwa 1100 Punkte
 (Mittelwert je Zeitfenster), damit die Datei klein bleibt. `--zoom` fügt ein

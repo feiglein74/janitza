@@ -209,10 +209,32 @@ def verdichten(punkte, ziel):
             for k, v in sorted(eimer.items())]
 
 
+EINHEITEN = {"p_sum": "W", "s_sum": "VA", "q_sum": "var", "i_l1": "A",
+             "u_l1n": "V", "frequenz": "Hz", "cosphi_l1": "", "lambda_sum": "",
+             "thd_i_l1": "%", "thd_u_l1": "%"}
+LABELS = {"p_sum": "Wirkleistung", "s_sum": "Scheinleistung", "i_l1": "Strom L1",
+          "u_l1n": "Spannung L1-N", "frequenz": "Frequenz", "cosphi_l1": "cos phi",
+          "lambda_sum": "Leistungsfaktor", "thd_i_l1": "Klirrfaktor Strom",
+          "thd_u_l1": "Klirrfaktor Spannung"}
+
+
+def ticks_fuer(ymax):
+    for schritt in (0.05, 0.1, 0.25, 0.5, 1, 2, 5, 10, 20, 50, 100, 200):
+        if ymax / schritt <= 6:
+            n = int(ymax / schritt)
+            return [round(i * schritt, 4) for i in range(n + 1)]
+    return [0, ymax]
+
+
 def baue_verlauf(args):
-    t0, punkte = lade_log(args.datei, args.column)
-    daten = verdichten(punkte, args.punkte)
-    tmax = daten[-1][0]
+    spalten = args.column or ["p_sum"]
+    daten = {}
+    t0 = None
+    for sp in spalten:
+        t0, punkte = lade_log(args.datei, sp)
+        daten[sp] = verdichten(punkte, args.punkte)
+
+    tmax = max(d[-1][0] for d in daten.values())
 
     phasen = []
     if args.phasen:
@@ -227,57 +249,73 @@ def baue_verlauf(args):
         phasen = [[sek(p["von"]), sek(p["bis"]), p.get("label", "")]
                   for p in roh]
 
-    werte = [v for _, v in daten]
-    ymax = args.max if args.max else max(werte) * 1.1
-    panels = [{"id": "oben", "ymax": ymax, "hoehe": 300}]
-    if args.zoom:
-        panels.append({"id": "unten", "ymax": args.zoom, "hoehe": 220})
+    marken = []
+    for m in (args.marke or []):
+        teil = m.split(":", 1)
+        marken.append([float(teil[0]), teil[1] if len(teil) > 1 else ""])
 
-    def ticks_fuer(ymax):
-        for schritt in (0.05, 0.1, 0.25, 0.5, 1, 2, 5, 10, 20, 50, 100):
-            if ymax / schritt <= 6:
-                n = int(ymax / schritt)
-                return [round(i * schritt, 4) for i in range(n + 1)]
-        return [0, ymax]
+    # Panels: bei einer Spalte + --zoom zwei Panels derselben Groesse,
+    # sonst ein Panel je Spalte.
+    panels = []
+    if len(spalten) == 1 and args.zoom:
+        sp = spalten[0]
+        ymax = args.max if args.max else max(v for _, v in daten[sp]) * 1.1
+        panels.append({"key": sp, "ymax": ymax, "hoehe": 300,
+                       "titel": "Gesamtverlauf"})
+        panels.append({"key": sp, "ymax": args.zoom, "hoehe": 220,
+                       "titel": "Zoom auf 0 bis %s %s"
+                       % (fmt(args.zoom), EINHEITEN.get(sp, ""))})
+    else:
+        for i, sp in enumerate(spalten):
+            ymax = max(v for _, v in daten[sp]) * 1.1
+            if i == 0 and args.max:
+                ymax = args.max
+            panels.append({"key": sp, "ymax": ymax,
+                           "hoehe": 260 if len(spalten) > 1 else 300,
+                           "titel": LABELS.get(sp, sp)})
 
-    for p in panels:
-        p["ticks"] = ticks_fuer(p["ymax"])
+    for i, pan in enumerate(panels):
+        pan["id"] = "p%d" % i
+        pan["ticks"] = ticks_fuer(pan["ymax"])
+        pan["einheit"] = EINHEITEN.get(pan["key"], "")
 
     teile = [kopf(args.titel, 1), '<div class="viz-root"><div class="wrap">']
     teile.append('<header><div class="eyebrow">%s</div><h1>%s</h1>'
                  % (args.eyebrow or ("%d Messpunkte ueber %.1f min"
-                                     % (len(punkte), tmax / 60)), args.titel))
+                                     % (len(daten[spalten[0]]), tmax / 60)),
+                    args.titel))
     if args.lede:
         teile.append('<p class="lede">%s</p>' % args.lede)
     teile.append("</header>")
 
-    for i, p in enumerate(panels):
-        titel = "Gesamtverlauf" if i == 0 else ("Zoom auf 0 bis %s %s"
-                                               % (fmt(p["ymax"]), args.einheit))
+    for pan in panels:
         teile.append('<section><h2>%s</h2><div class="chart">'
                      '<svg id="%s" viewBox="0 0 1000 %d" role="img" '
                      'aria-label="%s ueber die Zeit"></svg></div></section>'
-                     % (titel, p["id"], p["hoehe"], args.column))
+                     % (pan["titel"], pan["id"], pan["hoehe"], pan["titel"]))
 
     teile.append('<footer><span>Janitza UMG 96RM · Modbus RTU</span>'
-                 '<span>%s</span><span>%s</span></footer>'
-                 % (args.column, t0.strftime("%Y-%m-%d %H:%M")))
+                 '<span>%s</span></footer>' % t0.strftime("%Y-%m-%d %H:%M"))
     teile.append("</div></div><div id=\"tip\"></div>")
 
-    teile.append("<script>\nconst DATEN=%s;\nconst PHASEN=%s;\nconst EINHEIT=%s;\n%s\n%s\n</script>"
+    einheit_map = {pan["key"]: pan["einheit"] for pan in panels}
+    aufrufe = "\n".join(
+        'zeichne("%s",%s,%s,%s,%d);'
+        % (pan["id"], json.dumps(pan["key"]), pan["ymax"],
+           json.dumps(pan["ticks"]), pan["hoehe"])
+        for pan in panels)
+    teile.append("<script>\nconst DATEN=%s;\nconst PHASEN=%s;\n"
+                 "const MARKEN=%s;\nconst EINHEIT=%s;\n%s\n%s\n</script>"
                  % (json.dumps(daten, separators=(",", ":")),
                     json.dumps(phasen, separators=(",", ":")),
-                    json.dumps(args.einheit),
-                    JS_VERLAUF,
-                    "\n".join('zeichne("%s",%s,%s,%d);'
-                              % (p["id"], p["ymax"],
-                                 json.dumps(p["ticks"]), p["hoehe"])
-                              for p in panels)))
+                    json.dumps(marken, separators=(",", ":")),
+                    json.dumps(einheit_map, separators=(",", ":")),
+                    JS_VERLAUF, aufrufe))
     return "\n".join(teile)
 
 
 JS_VERLAUF = r"""
-const TMAX = DATEN[DATEN.length-1][0];
+const TMAX = Math.max(...Object.values(DATEN).map(a => a[a.length-1][0]));
 const NS = "http://www.w3.org/2000/svg";
 const tip = document.getElementById("tip");
 const de = v => String(v).replace(".", ",");
@@ -288,9 +326,10 @@ function el(n, a) {
   return e;
 }
 
-function zeichne(id, ymax, yticks, hoehe) {
+function zeichne(id, key, ymax, yticks, hoehe) {
   const svg = document.getElementById(id);
-  const L = 56, R = 14, T = 18, B = 30, W = 1000, H = hoehe;
+  const D = DATEN[key];
+  const L = 60, R = 14, T = 18, B = 30, W = 1000, H = hoehe;
   const px = t => L + (W - L - R) * t / TMAX;
   const py = v => H - B - (H - T - B) * Math.min(Math.max(v, 0), ymax) / ymax;
 
@@ -316,17 +355,28 @@ function zeichne(id, ymax, yticks, hoehe) {
     svg.appendChild(t);
   });
 
-  const schritt = TMAX > 900 ? 240 : TMAX > 300 ? 60 : 30;
-  for (let s = 0; s <= TMAX; s += schritt) {
+  const schritt = TMAX > 900 ? 240 : TMAX > 300 ? 60 : TMAX > 120 ? 30 : 10;
+  for (let s = 0; s <= TMAX + 0.1; s += schritt) {
     const t = el("text", { x: px(s), y: H - 10, "text-anchor": "middle",
       "font-size": 11, fill: "var(--text-muted)",
       "font-family": "ui-monospace, Menlo, monospace" });
-    t.textContent = (s / 60) + (s === 0 ? " min" : "");
+    t.textContent = (s / 60).toFixed(TMAX > 300 ? 0 : 1) + (s === 0 ? " min" : "");
     svg.appendChild(t);
   }
 
+  MARKEN.forEach(([t, label]) => {
+    svg.appendChild(el("line", { x1: px(t), y1: T, x2: px(t), y2: H - B,
+      stroke: "var(--accent)", "stroke-width": 1, "stroke-dasharray": "3 3" }));
+    if (label) {
+      const tx = el("text", { x: px(t) + 4, y: T + 12, "font-size": 10,
+        fill: "var(--accent)", "font-family": "ui-monospace, Menlo, monospace" });
+      tx.textContent = label;
+      svg.appendChild(tx);
+    }
+  });
+
   let d = "";
-  DATEN.forEach(([t, v], i) => {
+  D.forEach(([t, v], i) => {
     d += (i ? "L" : "M") + px(t).toFixed(1) + "," + py(v).toFixed(1);
   });
   svg.appendChild(el("path", { d, fill: "none", stroke: "var(--series-1)",
@@ -343,8 +393,8 @@ function zeichne(id, ymax, yticks, hoehe) {
     const box = svg.getBoundingClientRect();
     const rel = (e.clientX - box.left) / box.width * W;
     const t = (rel - L) / (W - L - R) * TMAX;
-    let best = DATEN[0], diff = Infinity;
-    for (const p of DATEN) {
+    let best = D[0], diff = Infinity;
+    for (const p of D) {
       const dd = Math.abs(p[0] - t);
       if (dd < diff) { diff = dd; best = p; }
     }
@@ -352,8 +402,8 @@ function zeichne(id, ymax, yticks, hoehe) {
     cross.setAttribute("x2", px(best[0]));
     cross.setAttribute("opacity", 0.4);
     const min = Math.floor(best[0] / 60), sek = Math.round(best[0] % 60);
-    tip.textContent = min + ":" + String(sek).padStart(2, "0") + "  —  "
-      + de(best[1].toFixed(3)) + " " + EINHEIT;
+    tip.textContent = min + ":" + String(sek).padStart(2, "0") + "  \u2014  "
+      + de(best[1].toFixed(3)) + " " + (EINHEIT[key] || "");
     tip.classList.add("on");
     tip.style.left = Math.min(e.clientX + 14, innerWidth - tip.offsetWidth - 8) + "px";
     tip.style.top = (e.clientY - tip.offsetHeight - 10) + "px";
@@ -583,11 +633,15 @@ def main():
     v = sub.add_parser("verlauf", help="Zeitverlauf aus einer Logdatei")
     v.add_argument("datei")
     v.add_argument("-o", "--output", required=True)
-    v.add_argument("-c", "--column", default="p_sum")
+    v.add_argument("-c", "--column", action="append",
+                   help="Spalte; mehrfach angebbar, je Spalte ein Panel "
+                        "(Vorgabe p_sum)")
     v.add_argument("--titel", default="Zeitverlauf")
     v.add_argument("--lede", default="")
     v.add_argument("--eyebrow", default="")
-    v.add_argument("--einheit", default="W")
+    v.add_argument("--marke", action="append",
+                   help="senkrechte Markierung, 'Sekunde' oder 'Sekunde:Text', "
+                        "mehrfach angebbar")
     v.add_argument("--phasen", help="JSON mit von/bis/label je Plateau")
     v.add_argument("--punkte", type=int, default=1100,
                    help="Zielzahl der Punkte nach Verdichtung")
