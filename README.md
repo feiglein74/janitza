@@ -700,6 +700,42 @@ Bedienelemente in einem Kasten): 1101 Messpunkte durch den Schaltmoment
 lückenlos, kein verlorener Wert. **Die Schaltstörung schlägt nicht auf die
 Datenleitung durch.**
 
+### Wandler verifizieren: ohmsche Last als Referenz
+
+Nach jedem Umbau am Strompfad — Wandler getauscht, Windungen geändert,
+Adern neu aufgelegt — mit einer **ohmschen Last** prüfen, bevor man
+Messwerten traut. Ein Widerstand (Halogenlampe, Heizer) *muss* cosφ = 1 und
+einen sauberen Sinus zeigen; kommt das heraus, stimmen Wandlerpolarität,
+Windungszahl und Phase in einem Test.
+
+Verifikation mit dem 30/5-Wandler (6 Windungen, effektiv 5/5, Parameter
+`010`/`012` = 5/5):
+
+| Last | I | cosφ | THD I | Befund |
+|---|---|---|---|---|
+| 20-W-Halogen + Trafo | 0,085 A | 0,9985 | 15,9 % | korrekt |
+| Halogenstrahler | 0,633 A | 0,9915 | 1,6 % | korrekt |
+
+Beide zeigen cosφ ≈ 1 und in sich stimmige Werte (P = U·I·λ geht auf). Damit
+ist bewiesen: **Polarität richtig, Verhältnis richtig, Phase richtig** — über
+den Strombereich von 1,7 % bis 12,7 % vom Nennstrom.
+
+**Vorsicht bei der Fehlersuche — zwei Lehren aus der Inbetriebnahme:**
+
+*Negative Wirkleistung ist nicht automatisch eine Verpolung.* Ein passiver
+Verbraucher, der negativ misst, *kann* verpolt sein — muss aber nicht. Bei
+Kleinstströmen weit unter dem Nennstrom liefert der Wandler ohnehin
+unbrauchbare Vorzeichen und Phasen. Erst mit einer ohmschen Last im
+brauchbaren Bereich klären, dann urteilen.
+
+*Ein scheinbar unmöglicher Wirkungsgrad liegt eher am Prüfling als am
+Messgerät.* Ein GaN-Lader zeigte „14,6 W Eingang bei 20 W Ausgang" — das wäre
+137 % gewesen. Ursache war nicht der Wandler (die ohmsche Referenz maß
+sauber), sondern die falsche Annahme, der Lader gebe wirklich 20 W ab. Er tat
+es nicht — die elektronische Last zog nicht die eingestellten Ampere.
+**Bei widersprüchlichen Zahlen zuerst prüfen, ob der Arbeitspunkt wirklich
+anliegt, bevor das Messgerät verdächtigt wird.**
+
 ### Falle: Eigenversorgung der elektronischen Last
 
 Die Versorgung der elektronischen Last gehört **nicht** in den gemessenen

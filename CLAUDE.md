@@ -47,6 +47,28 @@ Die Komparatoren wurden erprobt und **wieder zurückgesetzt** (`110 = 0`,
 `200 = 1`); das Gerät steht dort auf Werkseinstellung. Die verifizierte
 Prozedur samt gemessener Umschaltpunkte steht im README.
 
+## Wandler und Plausibilität
+
+Nach jedem Umbau am Strompfad mit einer **ohmschen Last** (Halogen, Heizer)
+verifizieren: Ein Widerstand muss cosφ = 1 und sauberen Sinus zeigen. Das
+prüft Polarität, Windungszahl und Phase in einem Schritt. Verifiziert mit
+dem 30/5 (6 Windungen, 5/5): Halogenlampen bei 0,085 A und 0,633 A lieferten
+cosφ 0,99. Details im README.
+
+Zwei Fehlschlüsse, die bei der Inbetriebnahme Zeit kosteten und beide falsch
+waren:
+
+- **Negative Wirkleistung ⇒ Verpolung** — nicht zwingend. Bei Kleinstströmen
+  weit unter Nennstrom sind Vorzeichen und Phase des Wandlers ohnehin
+  unbrauchbar. Erst mit ohmscher Last im brauchbaren Bereich urteilen.
+- **Unmöglicher Wirkungsgrad ⇒ Messgerät defekt** — meist liegt es am
+  Prüfling. „14,6 W ein bei 20 W aus" kam nicht vom Wandler, sondern davon,
+  dass die elektronische Last nicht den eingestellten Strom zog. Erst den
+  Arbeitspunkt prüfen, dann das Messgerät.
+
+Aufwändige Theorien über Wandlerfehler erst aufstellen, **nachdem** der
+ohmsche Referenztest sie stützt — nicht davor.
+
 ## Diagnose-Reihenfolge bei fehlender Antwort
 
 Diese Reihenfolge nicht abkürzen — bei der Inbetriebnahme wurde stundenlang
