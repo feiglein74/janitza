@@ -69,6 +69,15 @@ waren:
 Aufwändige Theorien über Wandlerfehler erst aufstellen, **nachdem** der
 ohmsche Referenztest sie stützt — nicht davor.
 
+**Auslegung:** Der 30/5-Wandler ist zu groß für kleine Prüflinge (Lader,
+Netzteile ziehen bei 230 V nur Bruchteile eines Ampere). Bei 6 % vom
+Nennstrom liest er ~15 % zu niedrig, unter ~5 % wird auch die Stromform Müll
+(THD > 130 % ist der Verräter). Verifiziert per Kennlinie im README, dreifach
+gegengeprüft (Last, Shelly, Direktmessung). **Nicht die Janitza ist schuld,
+sondern der Wandler.** Ein Wandler gehört zum Prüflingsstrom dimensioniert,
+nicht zum 5-A-Messbereich. Bis ein kleiner Wandler da ist: große Prüflinge
+über die Janitza, kleine über den Shelly.
+
 ## Diagnose-Reihenfolge bei fehlender Antwort
 
 Diese Reihenfolge nicht abkürzen — bei der Inbetriebnahme wurde stundenlang

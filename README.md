@@ -700,6 +700,84 @@ Bedienelemente in einem Kasten): 1101 Messpunkte durch den Schaltmoment
 lückenlos, kein verlorener Wert. **Die Schaltstörung schlägt nicht auf die
 Datenleitung durch.**
 
+### Kennlinie des Wandlers — und ein Auslegungsfehler
+
+Der 30/5-Wandler mit 6 Windungen (effektiv 5/5, `010`/`012` = 5/5) wurde an
+einem GaN-USB-Lader über den ganzen Lastbereich gegen die Referenzwerte
+geprüft. Ausgang jeweils an der elektronischen Last kontrolliert.
+
+| Profil | I<sub>ein</sub> | % Nenn | P<sub>ein</sub> (CT) | THD I | brauchbar? |
+|---|---|---|---|---|---|
+| 5 V / 0,5 A | 0,049 A | 0,99 % | 2,6 W | 198 % | nein |
+| 5 V / 1 A | 0,070 A | 1,41 % | 4,79 W | 220 % | nein |
+| 9 V / 1 A | 0,105 A | 2,11 % | 8,67 W | 216 % | nein |
+| 15 V / 1 A | 0,156 A | 3,13 % | 14,84 W | 201 % | nein |
+| 20 V / 3 A | 0,302 A | 6,03 % | 56,25 W | **33,75 %** | Form ok, Betrag −15 % |
+
+Zwei getrennte Effekte, die man auseinanderhalten muss:
+
+- **Die Stromform.** Der spitze Gleichrichterstrom des Laders (hoher
+  Scheitelfaktor) wird erst ab ~5 % vom Nennstrom sauber erfasst. Darunter
+  ist der THD Müll — er klebt bei ~200 %, obwohl der echte Wert bei 30–45 %
+  liegt. **Der THD ist der zuverlässige Verräter: über 130 % bei einem
+  Verbraucher, von dem man das nicht erwartet, heißt toter Bereich.**
+- **Der Betrag.** Selbst bei 6 % vom Nennstrom, wo die Form stimmt, liest der
+  Wandler noch **15 % zu niedrig** (56,25 statt 66 W). Beim Halogen bei
+  12,7 % waren es nur 3 %. Der Fehler wächst steil, je weiter unter den
+  Nennstrom man kommt.
+
+**Dreifach verifiziert**, damit der 15-%-Fehler nicht wieder eine
+unbewiesene Behauptung ist wie in der ersten Fassung:
+
+| Quelle | Wert | misst |
+|---|---|---|
+| Elektronische Last | 20 V × 3 A = 60 W | Ausgang |
+| Lader-Display | 61 W | Ausgang |
+| Direktmessung (Vorverwendung) | 66,1 W | Eingang |
+| Shelly Pro − Eigenbedarf (78,4 − 10,9) | ~67,5 W | Eingang |
+| **Janitza über Wandler** | **56,25 W** | Eingang, ~15 % zu niedrig |
+
+Last und Lader-Display sind sich beim Ausgang einig, Direktmessung und Shelly
+unabhängig beim Eingang — nur die Janitza-über-Wandler fällt heraus.
+
+**Nicht die Janitza ist das Problem, sondern der Wandler.** Das Gerät rechnet
+treu mit dem Signal, das der Wandler liefert; ist das Signal 15 % zu niedrig,
+kann kein Messgerät es retten. Belegt dadurch, dass die Janitza ohmsche
+Lasten (Halogen, cosφ 0,99) und die Stromform (THD 34 % bei 20 V/3 A) korrekt
+liest.
+
+#### Der Auslegungsfehler
+
+Der 30/5 wurde gewählt, um den vollen 5-A-Bereich der Janitza auszunutzen —
+also für die **Grenze des Messgeräts** optimiert statt für den **Strom der
+Prüflinge.** Das ist der Fehler. Ein typischer Prüfling (Lader, kleines
+Netzteil) zieht bei 230 V nur Bruchteile eines Ampere und sitzt damit
+dauerhaft im ungenauen unteren Wandlerbereich.
+
+**Ein Stromwandler gehört zum Prüflingsstrom dimensioniert, nicht zum
+Messbereich des Geräts.**
+
+Die Direktmessung der Vorverwendung war für kleine Ströme *genauer* — weil
+der Präzisions-Stromeingang der Janitza selbst bei wenigen Prozent seines
+Bereichs sauber misst, ohne den Magnetisierungsfehler eines Wandlers.
+Direktmessung ist aber verboten (siehe oben: keine Trennung). Der legitime
+Weg zurück zu dieser Genauigkeit *mit* Trennung:
+
+- **Ein kleiner Messwandler** (1/5, 0,5/5, Präzisionstyp) für die kleinen
+  Prüflinge — dann sitzt ihr Strom im genauen Bereich, mit galvanischer
+  Trennung und vollem Datensatz (Oberschwingungen, cosφ).
+- **Viele Windungen** auf dem 30/5 — hebt den Arbeitspunkt linear. 18
+  Windungen brächten den Lader auf ~18 % vom Nennstrom; dann `010` = 30/18 =
+  1,67, `012` = 5. Durch das Fenster begrenzt.
+
+#### Arbeitsteilung, bis ein passender Wandler da ist
+
+| Prüfling | Werkzeug |
+|---|---|
+| groß (Richtung 1 kW) | Janitza + 30/5, genau, voller Datensatz |
+| klein, nur Leistung/Energie | Shelly Pro (misst kleine Lasten genau und sicher) |
+| klein, mit Oberschwingungen | kleiner Wandler auf der Janitza nötig |
+
 ### Wandler verifizieren: ohmsche Last als Referenz
 
 Nach jedem Umbau am Strompfad — Wandler getauscht, Windungen geändert,
